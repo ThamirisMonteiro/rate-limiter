@@ -6,7 +6,7 @@ Desenvolver um rate limiter em Go que possa ser configurado para limitar o núme
 ## Descrição
 Este rate limiter controla o tráfego de requisições para um serviço web com base em dois critérios:
 - **Endereço IP**: Limita o número de requisições recebidas de um endereço IP em um intervalo de tempo definido.
-- **Token de Acesso**: Limita as requisições usando um token de acesso único, permitindo diferentes limites de expiração para cada token. O token deve ser enviado no header no formato:
+- **Token de Acesso**: Limita as requisições usando um token de acesso único, permitindo diferentes limites de expiração para cada token. O token deve ser enviado no header no formato: API_KEY: <TOKEN>
 
 As configurações de limite do token de acesso têm prioridade sobre as do IP. Por exemplo, se o limite por IP é de 10 req/s e o de um token específico é de 100 req/s, o rate limiter deve usar o limite do token.
 
