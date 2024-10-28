@@ -38,3 +38,11 @@ func (r RedisRepository) ExpireKey(key string, expiration time.Duration) error {
 func (r RedisRepository) TTLKey(key string) (time.Duration, error) {
 	return r.client.TTL(r.ctx, key).Result()
 }
+
+func (r RedisRepository) Close() error {
+	return r.client.Close()
+}
+
+func (r RedisRepository) FlushDB() error {
+	return r.client.FlushDB(r.ctx).Err()
+}

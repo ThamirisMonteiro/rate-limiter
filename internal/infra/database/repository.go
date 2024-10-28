@@ -8,4 +8,6 @@ type Repository interface {
 	IncrCounter(counter string) error
 	ExpireKey(key string, expiration time.Duration) error
 	TTLKey(key string) (time.Duration, error)
+	Close() error
+	FlushDB() error
 }
