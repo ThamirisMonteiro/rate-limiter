@@ -1,5 +1,18 @@
 services:
   redis:
-    image: redis
+    image: "redis:alpine"
+    container_name: redis
     ports:
       - "6379:6379"
+
+  rate-limiter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rate-limiter
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_ADDR=redis:6379
