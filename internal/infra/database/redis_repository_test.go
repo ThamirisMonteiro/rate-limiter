@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-var KeyDoesNotExist = time.Duration(-2)
-
 type RedisRepositoryTestSuite struct {
 	suite.Suite
 	repository database.Repository

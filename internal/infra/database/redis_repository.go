@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const KeyDoesNotExist = time.Duration(-2)
+
 type RedisRepository struct {
 	client *redis.Client
 	ctx    context.Context
