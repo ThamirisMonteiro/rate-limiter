@@ -39,17 +39,48 @@ Nos dois casos, as próximas requisições são permitidas apenas após o tempo 
 - Utilização de `docker/docker-compose` para realizar testes da aplicação.
 - O servidor web deve responder na porta `8080`.
 
-## Checklist de Implementação
-1. **Middleware**: Criação de um middleware para interceptar requisições.
-2. **Lógica de Limitação**: Desenvolvimento da contagem de requisições para IP e tokens, priorizando tokens sobre IP.
-3. **Persistência no Redis**: Uso de Redis para armazenar contagem e limites de requisições.
-4. **Configurações**: Carregar as configurações via variáveis de ambiente ou `.env`.
-4. **Estratégia de Persistência**: Definir uma interface para substituir facilmente o Redis por outro banco de dados.
-4. **Resposta ao Exceder Limite**: Retornar erro `429` com a mensagem adequada.
-4. **Docker-Compose**: Configuração de um ambiente Redis usando `docker-compose`. 
-5. **Testes**: Implementação de testes automatizados para validação em diferentes condições.
+# Checklist de Implementação do Rate Limiter
 
+## 1. Middleware Configurável
+- Desenvolver um middleware injetável que intercepte as requisições e aplique as regras de limitação.
+- Garantir que o middleware seja facilmente configurável para permitir ajustes rápidos nos parâmetros e possibilitar sua ativação/desativação conforme necessário.
 
+## 2. Lógica de Limitação Prioritária (IP e Token)
+- Implementar contadores de requisições independentes para IPs e tokens.
+- Priorizar o limite do token de acesso sobre o limite por IP, se ambos estiverem presentes na requisição.
+- Definir bloqueios específicos de IP ou Token quando o limite é excedido, de acordo com o critério ativo.
+
+## 3. Persistência com Redis
+- Utilizar Redis para armazenar e consultar as contagens de requisições, limites e status de bloqueio de IPs e tokens.
+- Configurar o Redis com persistência no Docker-Compose para facilitar o desenvolvimento e testes.
+
+## 4. Estratégia de Persistência Substituível
+- Implementar uma interface de persistência que permita a substituição do Redis por outro mecanismo de armazenamento.
+- Testar a interface para assegurar a flexibilidade na troca de armazenamento.
+
+## 5. Configurações Dinâmicas
+- Carregar as configurações de limite, expiração e bloqueio por variáveis de ambiente ou arquivo `.env`.
+- Incluir no `.env` variáveis como `REQ_LIMIT`, `BLOCK_TIME`, e outras específicas para a lógica de limitação.
+- Certificar-se de que o limite de requisições é configurado no Docker-Compose para o Redis.
+
+## 6. Resposta ao Exceder o Limite
+- Retornar um código de erro HTTP 429 com a mensagem padrão: "You have reached the maximum number of requests or actions allowed within a certain time frame."
+- Garantir que o retorno seja o mesmo, independentemente de a limitação ser aplicada por IP ou token.
+
+## 7. Docker-Compose Configurado
+- Configurar o ambiente Redis no Docker-Compose, garantindo persistência e compatibilidade com a estratégia de testes automatizados.
+- Definir portas e variáveis de ambiente necessárias para o Redis e para o rate limiter no Docker-Compose.
+
+## 8. Testes Automatizados Abrangentes
+- **Testes de Limite por IP e Token**: Validar que o middleware bloqueia adequadamente quando o limite de requisições por IP ou token é excedido.
+- **Cenários de Sobrecarga**: Simular alta carga para testar a eficiência e robustez do rate limiter sob diferentes condições.
+- **Testes de Persistência Alternativa**: Incluir testes que validem a troca do Redis por outro mecanismo de persistência.
+
+## 9. Documentação Completa
+- **Guia de Configuração**: Explicar como configurar o rate limiter, incluindo as variáveis de ambiente e o arquivo `.env`.
+- **Setup com Docker-Compose**: Documentar o processo de inicialização do ambiente com Docker-Compose para facilitar o setup de desenvolvimento e testes.
+- **Explicação da Lógica de Limitação**: Fornecer uma visão geral da lógica de limitação e da prioridade entre IP e token.
+- **Testes Automatizados**: Instruções para executar os testes e exemplos de saídas esperadas para cenários de limites excedidos.
 
 
 
