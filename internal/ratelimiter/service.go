@@ -2,6 +2,7 @@ package ratelimiter
 
 import (
 	"github.com/ThamirisMonteiro/rate-limiter/internal/infra/database"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -11,26 +12,31 @@ var SettingsKey = "rate_limit:settings"
 
 type Service struct {
 	repository database.Repository
+	reqLimit   int
 }
 
 func NewService(repository database.Repository) *Service {
-	return &Service{repository: repository}
-}
-
-func (s Service) AllowRequest(identifier string) (bool, error) {
 	reqLimitStr := os.Getenv("REQ_LIMIT")
 
 	reqLimit, err := strconv.Atoi(reqLimitStr)
 	if err != nil {
-		return false, err
+		log.Printf("Invalid REQ_LIMIT value: %s. Defaulting to 0.", reqLimitStr)
+		reqLimit = 0
 	}
 
+	return &Service{
+		repository: repository,
+		reqLimit:   reqLimit,
+	}
+}
+
+func (s Service) AllowRequest(identifier string) (bool, error) {
 	currentCount, err := s.GetRequestCount(identifier)
 	if err != nil {
 		return false, err
 	}
 
-	if currentCount < reqLimit {
+	if currentCount < s.reqLimit {
 		err := s.repository.IncrCounter("requests:" + identifier)
 		if err != nil {
 			return false, err

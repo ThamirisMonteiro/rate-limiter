@@ -70,13 +70,13 @@ func (suite *RedisRepositoryTestSuite) Test_TTLKey_Expired() {
 
 	ttl, err := suite.repository.TTLKey("key")
 	suite.NoError(err)
-	suite.Equal(KeyDoesNotExist, ttl)
+	suite.Equal(database.KeyDoesNotExist, ttl)
 }
 
 func (suite *RedisRepositoryTestSuite) Test_TTLKey_NotFound() {
 	ttl, err := suite.repository.TTLKey("not_found")
 	suite.NoError(err)
-	suite.Equal(KeyDoesNotExist, ttl)
+	suite.Equal(database.KeyDoesNotExist, ttl)
 }
 
 func (suite *RedisRepositoryTestSuite) Test_GetKey_NotFound() {
