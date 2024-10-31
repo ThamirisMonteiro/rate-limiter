@@ -4,6 +4,7 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    command: ["redis-server", "--loglevel", "nothing"]
 
   rate-limiter:
     build:
@@ -17,3 +18,5 @@ services:
     environment:
       - REDIS_ADDR=redis:6379
       - REQ_LIMIT=10
+      - BLOCK_TIME_IP=10
+      - BLOCK_TIME_TOKEN=600

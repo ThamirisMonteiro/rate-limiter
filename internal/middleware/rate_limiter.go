@@ -49,5 +49,6 @@ func checkRequestLimit(service *ratelimiter.Service, identifier string, w http.R
 		w.Write([]byte("You have reached the maximum number of requests or actions allowed within a certain time frame"))
 		return false
 	}
+
 	return true
 }

@@ -1,4 +1,4 @@
-FROM golang:1.20 AS builder
+FROM golang:1.19 AS builder
 
 WORKDIR /app
 
@@ -19,4 +19,4 @@ EXPOSE 8080
 
 RUN ls -la .
 
-CMD ["./rate-limiter"]
+CMD ["sh", "-c", "./rate-limiter"]

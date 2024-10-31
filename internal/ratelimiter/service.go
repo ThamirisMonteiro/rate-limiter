@@ -2,8 +2,6 @@ package ratelimiter
 
 import (
 	"github.com/ThamirisMonteiro/rate-limiter/internal/infra/database"
-	"log"
-	"os"
 	"strconv"
 	"time"
 )
@@ -11,23 +9,36 @@ import (
 var SettingsKey = "rate_limit:settings"
 
 type Service struct {
-	repository database.Repository
-	reqLimit   int
+	repo           database.Repository
+	reqLimit       int
+	blockTimeIP    time.Duration
+	blockTimeToken time.Duration
 }
 
-func NewService(repository database.Repository) *Service {
-	reqLimitStr := os.Getenv("REQ_LIMIT")
+func NewService(repo database.Repository, reqLimit int, blockTimeIP, blockTimeToken time.Duration) (*Service, error) {
+	service := &Service{
+		repo:           repo,
+		reqLimit:       reqLimit,
+		blockTimeIP:    blockTimeIP,
+		blockTimeToken: blockTimeToken,
+	}
 
-	reqLimit, err := strconv.Atoi(reqLimitStr)
+	err := service.SetLimit("request_limit", reqLimit, blockTimeToken)
 	if err != nil {
-		log.Printf("Invalid REQ_LIMIT value: %s. Defaulting to 0.", reqLimitStr)
-		reqLimit = 0
+		return nil, err
 	}
 
-	return &Service{
-		repository: repository,
-		reqLimit:   reqLimit,
+	err = service.SetLimit("block_time_ip", int(blockTimeIP.Seconds()), blockTimeIP)
+	if err != nil {
+		return nil, err
 	}
+
+	err = service.SetLimit("block_time_token", int(blockTimeToken.Seconds()), blockTimeToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return service, nil
 }
 
 func (s Service) AllowRequest(identifier string) (bool, error) {
@@ -37,16 +48,22 @@ func (s Service) AllowRequest(identifier string) (bool, error) {
 	}
 
 	if currentCount < s.reqLimit {
-		err := s.repository.IncrCounter("requests:" + identifier)
-		if err != nil {
-			return false, err
-		}
-
 		if currentCount == 0 {
-			err := s.repository.ExpireKey("requests:"+identifier, time.Hour)
+			err := s.repo.IncrCounter("requests:" + identifier)
 			if err != nil {
 				return false, err
 			}
+
+			err = s.repo.ExpireKey("requests:"+identifier, time.Hour)
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		}
+
+		err = s.repo.IncrCounter("requests:" + identifier)
+		if err != nil {
+			return false, err
 		}
 
 		return true, nil
@@ -58,8 +75,12 @@ func (s Service) AllowRequest(identifier string) (bool, error) {
 func (s Service) GetRequestCount(identifier string) (int, error) {
 	counterKey := "requests:" + identifier
 
-	countStr, err := s.repository.GetKey(counterKey)
+	countStr, err := s.repo.GetKey(counterKey)
 	if err != nil {
+		if err.Error() == "redis: nil" {
+			return 0, nil
+		}
+
 		return 0, err
 	}
 
@@ -75,13 +96,8 @@ func (s Service) GetRequestCount(identifier string) (int, error) {
 	return count, nil
 }
 
-func (s Service) SetLimit(limit int, ttl time.Duration) error {
-	err := s.repository.SetKey(SettingsKey, strconv.Itoa(limit), ttl)
-	if err != nil {
-		return err
-	}
-
-	err = s.repository.ExpireKey(SettingsKey, ttl)
+func (s Service) SetLimit(key string, limit int, ttl time.Duration) error {
+	err := s.repo.SetKey(key, strconv.Itoa(limit), ttl)
 	if err != nil {
 		return err
 	}

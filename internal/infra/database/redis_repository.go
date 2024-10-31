@@ -18,6 +18,7 @@ func NewRedisRepository(address string) *RedisRepository {
 	client := redis.NewClient(&redis.Options{
 		Addr: address,
 	})
+
 	return &RedisRepository{client: client, ctx: ctx}
 }
 
