@@ -7,31 +7,31 @@ import (
 )
 
 type Service struct {
-	repo           database.Repository
-	reqLimit       int
-	blockTimeIP    time.Duration
-	blockTimeToken time.Duration
+	Repo           database.Repository
+	ReqLimit       int
+	BlockTimeIP    time.Duration
+	BlockTimeToken time.Duration
 }
 
 func NewService(repo database.Repository, reqLimit int, blockTimeIP, blockTimeToken time.Duration) (*Service, error) {
 	service := &Service{
-		repo:           repo,
-		reqLimit:       reqLimit,
-		blockTimeIP:    blockTimeIP,
-		blockTimeToken: blockTimeToken,
+		Repo:           repo,
+		ReqLimit:       reqLimit,
+		BlockTimeIP:    blockTimeIP,
+		BlockTimeToken: blockTimeToken,
 	}
 
-	err := service.repo.SetKey("req_limit", strconv.Itoa(reqLimit), 0)
+	err := service.Repo.SetKey("req_limit", strconv.Itoa(reqLimit), 0)
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.repo.SetKey("block_time_ip", blockTimeIP.String(), 0)
+	err = service.Repo.SetKey("block_time_ip", blockTimeIP.String(), 0)
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.repo.SetKey("block_time_token", blockTimeToken.String(), 0)
+	err = service.Repo.SetKey("block_time_token", blockTimeToken.String(), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -47,17 +47,17 @@ func (s Service) AllowRequest(identifier, reqType string) (bool, error) {
 
 	if !exists {
 		var blockTime int
-		if s.blockTimeToken > s.blockTimeIP {
-			blockTime = int(s.blockTimeToken)
+		if s.BlockTimeToken > s.BlockTimeIP {
+			blockTime = int(s.BlockTimeToken)
 		} else {
 			if reqType == "ip" {
-				blockTime = int(s.blockTimeIP)
+				blockTime = int(s.BlockTimeIP)
 			} else {
-				blockTime = int(s.blockTimeToken)
+				blockTime = int(s.BlockTimeToken)
 			}
 		}
 
-		err := s.repo.SetKey("requests:"+identifier, "1", time.Duration(blockTime))
+		err := s.Repo.SetKey("requests:"+identifier, "1", time.Duration(blockTime))
 		if err != nil {
 			return false, err
 		}
@@ -73,10 +73,10 @@ func (s Service) AllowRequest(identifier, reqType string) (bool, error) {
 			return false, err
 		}
 
-		if count >= s.reqLimit || ttl <= 0 {
+		if count >= s.ReqLimit || ttl <= 0 {
 			return false, nil
 		} else {
-			err := s.repo.IncrCounter("requests:" + identifier)
+			err := s.Repo.IncrCounter("requests:" + identifier)
 			if err != nil {
 				return false, err
 			}
@@ -88,7 +88,7 @@ func (s Service) AllowRequest(identifier, reqType string) (bool, error) {
 func (s Service) GetRequestCount(identifier string) (int, error) {
 	counterKey := "requests:" + identifier
 
-	countStr, err := s.repo.GetKey(counterKey)
+	countStr, err := s.Repo.GetKey(counterKey)
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return 0, nil
@@ -110,7 +110,7 @@ func (s Service) GetRequestCount(identifier string) (int, error) {
 }
 
 func (s Service) GetTTL(identifier string) (int, error) {
-	ttl, err := s.repo.TTLKey("requests:" + identifier)
+	ttl, err := s.Repo.TTLKey("requests:" + identifier)
 	if err != nil {
 		return 0, err
 	}
@@ -119,7 +119,7 @@ func (s Service) GetTTL(identifier string) (int, error) {
 }
 
 func (s Service) AlreadyExists(identifier string) (bool, error) {
-	_, err := s.repo.GetKey("requests:" + identifier)
+	_, err := s.Repo.GetKey("requests:" + identifier)
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return false, nil
@@ -127,5 +127,6 @@ func (s Service) AlreadyExists(identifier string) (bool, error) {
 
 		return false, err
 	}
+
 	return true, nil
 }
