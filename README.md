@@ -1,87 +1,48 @@
-# Rate Limiter em Go
+# Rate Limiter
 
-## Objetivo
-Desenvolver um rate limiter em Go que possa ser configurado para limitar o número máximo de requisições por segundo com base em um endereço IP específico ou em um token de acesso.
+### Visão Geral
 
-## Descrição
-Este rate limiter controla o tráfego de requisições para um serviço web com base em dois critérios:
-- **Endereço IP**: Limita o número de requisições recebidas de um endereço IP em um intervalo de tempo definido.
-- **Token de Acesso**: Limita as requisições usando um token de acesso único, permitindo diferentes limites de expiração para cada token. O token deve ser enviado no header no formato: API_KEY: <TOKEN>
+Este Rate Limiter é projetado para controlar o tráfego e impedir o abuso de endpoints limitando o número de requisições permitidas. Ele funciona com dois identificadores:
+- **IP**: bloqueio baseado no endereço IP.
+- **Token de Acesso**: bloqueio baseado em um token específico de acesso.
 
-As configurações de limite do token de acesso têm prioridade sobre as do IP. Por exemplo, se o limite por IP é de 10 req/s e o de um token específico é de 100 req/s, o rate limiter deve usar o limite do token.
+### Requisitos
 
-## Requisitos
-1. Middleware injetável no servidor web para interceptar requisições.
-2. Capacidade de configurar o número máximo de requisições permitidas por segundo.
-3. Opção para definir o tempo de bloqueio de IP ou Token em caso de exceder o limite.
-4. Configurações de limite definidas por variáveis de ambiente ou arquivo `.env` na raiz do projeto.
-5. Configuração para limitação tanto por IP quanto por token de acesso.
-6. Retorno apropriado quando o limite é excedido:
-- **Código HTTP**: 429
-- **Mensagem**: "you have reached the maximum number of requests or actions allowed within a certain time frame"
-7. Armazenamento e consulta das informações de "limiter" em um banco de dados Redis, utilizando `docker-compose` para subir o Redis.
-8. Estratégia para permitir trocar facilmente o Redis por outro mecanismo de persistência.
-9. Lógica de limitação separada do middleware.
+- [Docker](https://www.docker.com/) e [Docker Compose](https://docs.docker.com/compose/) instalados
+- [Go](https://golang.org/dl/) versão 1.19 ou superior (opcional, caso deseje rodar o projeto fora do contêiner)
 
-## Exemplos
-- **Limitação por IP**: Se configurado para 5 req/s por IP, o IP `192.168.1.1` enviando 6 requisições em um segundo deve ter a sexta requisição bloqueada.
-- **Limitação por Token**: Se um token `abc123` tem limite de 10 req/s, a décima primeira requisição no intervalo deve ser bloqueada.
+### Configuração
 
-Nos dois casos, as próximas requisições são permitidas apenas após o tempo de expiração definido. Exemplo: Se o tempo de expiração é 5 minutos, o IP/token pode realizar novas requisições somente após esse intervalo.
+O sistema de Rate Limiting é configurado com variáveis de ambiente que você pode definir no `docker-compose.yml`. Aqui estão as variáveis principais e seus propósitos:
 
-## Dicas
-- Teste o rate limiter sob diferentes condições de carga para assegurar sua robustez e eficiência em alto tráfego.
+- `REDIS_ADDR`: endereço do Redis, geralmente `redis:6379` quando rodando em contêiner.
+- `REQ_LIMIT`: número máximo de requisições permitidas antes de bloquear.
+- `BLOCK_TIME_IP`: tempo de bloqueio em segundos para o limite de IP.
+- `BLOCK_TIME_TOKEN`: tempo de bloqueio em segundos para o limite de token.
 
-## Entrega
-- Código-fonte completo.
-- Documentação explicando o funcionamento do rate limiter e como configurá-lo.
-- Testes automatizados que demonstrem a eficácia do rate limiter em diferentes cenários.
-- Utilização de `docker/docker-compose` para realizar testes da aplicação.
-- O servidor web deve responder na porta `8080`.
+### Execução
 
-# Checklist de Implementação do Rate Limiter
+Para rodar o Rate Limiter e suas dependências, siga os passos abaixo:
 
-## 1. Middleware Configurável
-- Desenvolver um middleware injetável que intercepte as requisições e aplique as regras de limitação.
-- Garantir que o middleware seja facilmente configurável para permitir ajustes rápidos nos parâmetros e possibilitar sua ativação/desativação conforme necessário.
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/rate-limiter.git
+   cd rate-limiter
+   ```
+2. Execute o Docker Compose para iniciar o serviço:
+   ```bash
+   docker compose up --build
+   ```
+Isso inicia o serviço rate-limiter na porta 8080 e um contêiner do Redis.
+3. Acesse o serviço em:
+   ```bash
+    http://localhost:8080
+   ```
+### Testes
 
-## 2. Lógica de Limitação Prioritária (IP e Token)
-- Implementar contadores de requisições independentes para IPs e tokens.
-- Priorizar o limite do token de acesso sobre o limite por IP, se ambos estiverem presentes na requisição.
-- Definir bloqueios específicos de IP ou Token quando o limite é excedido, de acordo com o critério ativo.
-
-## 3. Persistência com Redis
-- Utilizar Redis para armazenar e consultar as contagens de requisições, limites e status de bloqueio de IPs e tokens.
-- Configurar o Redis com persistência no Docker-Compose para facilitar o desenvolvimento e testes.
-
-## 4. Estratégia de Persistência Substituível
-- Implementar uma interface de persistência que permita a substituição do Redis por outro mecanismo de armazenamento.
-- Testar a interface para assegurar a flexibilidade na troca de armazenamento.
-
-## 5. Configurações Dinâmicas
-- Carregar as configurações de limite, expiração e bloqueio por variáveis de ambiente ou arquivo `.env`.
-- Incluir no `.env` variáveis como `REQ_LIMIT`, `BLOCK_TIME`, e outras específicas para a lógica de limitação.
-- Certificar-se de que o limite de requisições é configurado no Docker-Compose para o Redis.
-
-## 6. Resposta ao Exceder o Limite
-- Retornar um código de erro HTTP 429 com a mensagem padrão: "You have reached the maximum number of requests or actions allowed within a certain time frame."
-- Garantir que o retorno seja o mesmo, independentemente de a limitação ser aplicada por IP ou token.
-
-## 7. Docker-Compose Configurado
-- Configurar o ambiente Redis no Docker-Compose, garantindo persistência e compatibilidade com a estratégia de testes automatizados.
-- Definir portas e variáveis de ambiente necessárias para o Redis e para o rate limiter no Docker-Compose.
-
-## 8. Testes Automatizados Abrangentes
-- **Testes de Limite por IP e Token**: Validar que o middleware bloqueia adequadamente quando o limite de requisições por IP ou token é excedido.
-- **Cenários de Sobrecarga**: Simular alta carga para testar a eficiência e robustez do rate limiter sob diferentes condições.
-- **Testes de Persistência Alternativa**: Incluir testes que validem a troca do Redis por outro mecanismo de persistência.
-
-## 9. Documentação Completa
-- **Guia de Configuração**: Explicar como configurar o rate limiter, incluindo as variáveis de ambiente e o arquivo `.env`.
-- **Setup com Docker-Compose**: Documentar o processo de inicialização do ambiente com Docker-Compose para facilitar o setup de desenvolvimento e testes.
-- **Explicação da Lógica de Limitação**: Fornecer uma visão geral da lógica de limitação e da prioridade entre IP e token.
-- **Testes Automatizados**: Instruções para executar os testes e exemplos de saídas esperadas para cenários de limites excedidos.
-
-
-
+Para executar os testes, o projeto inclui um contêiner dedicado que inicializa o Redis e executa automaticamente os testes. Rode o comando abaixo para iniciar os testes:
+   ```bash
+	docker compose run tests
+```
+Os testes cobrem a lógica do Rate Limiter e verificam os métodos principais de controle de requisições.
 
