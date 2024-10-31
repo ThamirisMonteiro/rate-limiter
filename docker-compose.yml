@@ -20,3 +20,4 @@ services:
       - REQ_LIMIT=7
       - BLOCK_TIME_IP=10
       - BLOCK_TIME_TOKEN=15
+

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RateLimiterMiddleware(service *ratelimiter.Service) func(http.Handler) http.Handler {
+func RateLimiterMiddleware(service ratelimiter.RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			identifier, reqType := extractIdentifier(r)
@@ -40,7 +40,7 @@ func extractIdentifier(r *http.Request) (string, string) {
 	return host, reqType
 }
 
-func checkRequestLimit(service *ratelimiter.Service, identifier string, w http.ResponseWriter, reqType string) bool {
+func checkRequestLimit(service ratelimiter.RateLimiter, identifier string, w http.ResponseWriter, reqType string) bool {
 	allowed, err := service.AllowRequest(identifier, reqType)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

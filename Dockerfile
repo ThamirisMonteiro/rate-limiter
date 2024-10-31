@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o rate-limiter ./cmd/ratelimiter/main.go
 
 FROM alpine:latest
 
-WORKDIR /root/
+WORKDIR /app
 
 COPY --from=builder /app/rate-limiter .
 
@@ -19,4 +19,4 @@ EXPOSE 8080
 
 RUN ls -la .
 
-CMD ["sh", "-c", "./rate-limiter"]
+CMD ["./rate-limiter"]
