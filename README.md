@@ -40,9 +40,6 @@ Isso inicia o serviço rate-limiter na porta 8080 e um contêiner do Redis.
    ```
 ### Testes
 
-Para executar os testes, o projeto inclui um contêiner dedicado que inicializa o Redis e executa automaticamente os testes. Rode o comando abaixo para iniciar os testes:
-   ```bash
-	docker compose run tests
-```
+Para executar os testes, o projeto inclui um contêiner dedicado que inicializa o Redis e executa automaticamente os testes.
 Os testes cobrem a lógica do Rate Limiter e verificam os métodos principais de controle de requisições.
 

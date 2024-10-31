@@ -21,3 +21,18 @@ services:
       - BLOCK_TIME_IP=10
       - BLOCK_TIME_TOKEN=15
 
+  test:
+    image: "golang:1.19"
+    container_name: test
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - rate-limiter
+      - redis
+    command: ["go", "test", "./..."]
+    environment:
+      - REDIS_ADDR=redis:6379
+      - REQ_LIMIT=7
+      - BLOCK_TIME_IP=10
+      - BLOCK_TIME_TOKEN=15
