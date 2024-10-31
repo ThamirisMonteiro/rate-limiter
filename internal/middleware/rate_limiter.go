@@ -9,9 +9,9 @@ import (
 func RateLimiterMiddleware(service *ratelimiter.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			identifier := extractIdentifier(r)
+			identifier, reqType := extractIdentifier(r)
 
-			allowed := checkRequestLimit(service, identifier, w)
+			allowed := checkRequestLimit(service, identifier, w, reqType)
 			if !allowed {
 				return
 			}
@@ -21,24 +21,27 @@ func RateLimiterMiddleware(service *ratelimiter.Service) func(http.Handler) http
 	}
 }
 
-func extractIdentifier(r *http.Request) string {
+func extractIdentifier(r *http.Request) (string, string) {
+	var reqType string
 	token := r.Header.Get("API_KEY")
 	if token != "" {
-		return token
+		reqType = "token"
+		return token, reqType
 	}
 
 	ip := r.RemoteAddr
+	reqType = "ip"
 
 	host, _, err := net.SplitHostPort(ip)
 	if err != nil {
-		return ip
+		return ip, reqType
 	}
 
-	return host
+	return host, reqType
 }
 
-func checkRequestLimit(service *ratelimiter.Service, identifier string, w http.ResponseWriter) bool {
-	allowed, err := service.AllowRequest(identifier)
+func checkRequestLimit(service *ratelimiter.Service, identifier string, w http.ResponseWriter, reqType string) bool {
+	allowed, err := service.AllowRequest(identifier, reqType)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return false

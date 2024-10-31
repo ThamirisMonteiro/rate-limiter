@@ -17,6 +17,6 @@ services:
       - redis
     environment:
       - REDIS_ADDR=redis:6379
-      - REQ_LIMIT=10
+      - REQ_LIMIT=7
       - BLOCK_TIME_IP=10
-      - BLOCK_TIME_TOKEN=600
+      - BLOCK_TIME_TOKEN=15
